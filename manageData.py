@@ -10,6 +10,17 @@ def sendStatus(status):
     
     requests.post((url + '/status'), {'status':status})
     
+def isSubmit():
+    global url
+    
+    r = requests.get((url +'/isSubmit'))
+    value = r.text
+    
+    if(value=='1'):
+        return True
+    else:
+        return False
+    
 def sendName(userName):
     global url
     
@@ -18,8 +29,10 @@ def sendName(userName):
 def getName():
     global url
     
-    return userName = requests.get((url + '/getName'))
+    r = requests.get((url + '/getName'))
+    userName = r.text
     
+    return userName
     
 def picButton():
     global url
@@ -27,6 +40,6 @@ def picButton():
     pressed = request.get((url + '/picTaken'))
     
     if(pressed):
-        return true
+        return True
     else:
-        return false
+        return False

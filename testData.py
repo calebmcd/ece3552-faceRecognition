@@ -1,5 +1,13 @@
 from manageData import *
+import time
 
-name = 'Caleb McDougall'
+sendStatus('old')
 
-sendName(name.upper())
+#print(isSubmit())
+
+while(isSubmit()==False):
+   time.sleep(1)
+    
+userName = getName()
+
+print(userName)

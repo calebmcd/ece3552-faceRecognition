@@ -10,6 +10,7 @@ import cv2
 import os
 import time
 import RPi.GPIO as GPIO
+from manageData import *
 
 toggle = False
 
@@ -128,7 +129,8 @@ def facialRecognition():
             if name == "Unknown":
                 break
             else:
-                #add code to send current name to database
+                # send current name to database
+                sendName(name)
 
             # update the FPS counter
             fps.update()
@@ -146,6 +148,10 @@ def facialRecognition():
 def buildFaceData():
     global toggle
     #prompt for username
+    sendStatus('old')
+    while(isSubmit()==False)
+       time.sleep(1)
+        
     userName = getName()
 
     # construct the argument parser and parse the arguments
@@ -213,8 +219,10 @@ def buildFaceData():
     if result == True:
         print("[INFO] {} face images stored".format(total))
         print("[INFO] cleaning up...")
+        sendStatus('complete')
     else:
         print("[WARNING] Could not save images.... Closing Windows")
+        sendStatus('error')
     cv2.destroyAllWindows()
     #vs.stop()
 
