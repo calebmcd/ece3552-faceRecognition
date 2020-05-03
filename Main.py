@@ -11,23 +11,10 @@ import time
 import cv2
 import os
 import time
-import RPi.GPIO as GPIO
 
-toggle = False
 global name
+global result
 
-def setup():
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(11, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setwarnings(False)
-
-def swButton(ev=None):
-    global toggle
-    if toggle:
-        print('Button Pressed')
-    
-    toggle = not toggle
-    
 def facialRecognition():
     global name
     name = "Unknown"
@@ -49,9 +36,9 @@ def facialRecognition():
 
     # initialize the video stream and allow the camera sensor to warm up
     print("[INFO] starting video stream...")
-    #vs = VideoStream(src=0).start()
+    vs = VideoStream(src=0).start()
     # vs = VideoStream(usePiCamera=True).start()
-    #time.sleep(2.0)
+    time.sleep(2.0)
 
     # start the FPS counter
     fps = FPS().start()
@@ -151,11 +138,10 @@ def facialRecognition():
 
     # do a bit of cleanup
     cv2.destroyAllWindows()
-    #vs.stop()
+    vs.stop()
     return name;
 
 def buildFaceData():
-    global toggle
     global result
     
     #prompt for username
@@ -180,8 +166,8 @@ def buildFaceData():
     # and initialize the total number of example faces written to disk
     # thus far
     print("[INFO] starting video stream...")
-    #vs = VideoStream(src=0).start()
-    # vs = VideoStream(usePiCamera=True).start()
+    vs = VideoStream(src=0).start()
+    #vs = VideoStream(usePiCamera=True).start()
     time.sleep(2.0)
     total = 0
 
@@ -210,19 +196,26 @@ def buildFaceData():
      
         # if the `k` key was pressed, write the *original* frame to disk
         # so we can later process it and use it for face recognition
-        if picButton():
-            
-            p = os.path.sep.join([args["output"], "{}.png".format(
-                str(total).zfill(5))])
-            if not cv2.imwrite(p, orig):
-                result = False
-            else:
-                result = True
+        while True:
+            #print('Waiting for button press....')
+            if picButton():
                 
-            
-            
-            total += 1
-        # Break from loop after picture taken
+                print('Button Pressed')
+                
+                #p = os.path.sep.join([args["output"], "{}.png".format(
+                #    str(total).zfill(5))])
+                
+                p = os.path.sep.join([os.path.expanduser('~') + "database" + userName, "{}.png".format(
+                    str(total).zfill(5))])
+                if not cv2.imwrite(p, orig):
+                    result = False
+                    print('False')
+                else:
+                    result = True
+                    print('True')
+                    
+                break    
+            # Break from loop after picture taken
         break
         time.sleep(2)
 
@@ -235,26 +228,20 @@ def buildFaceData():
         print("[WARNING] Could not save images.... Closing Windows")
         sendStatus('error')
     cv2.destroyAllWindows()
-    #vs.stop()
+    vs.stop()
 
 
-def destroy():
-    GPIO.cleanup()
-
-
-setup()
-GPIO.add_event_detect(11, GPIO.RISING, callback=swButton)
-vs = VideoStream(src=0).start()
+#vs = VideoStream(src=0).start()
 #encodeFaces()
-time.sleep(2)
+#time.sleep(2)
 while True:
     facialRecognition()
     if name == 'Unknown':
         sendStatus('new')
         buildFaceData()
         
-print(name)
-vs.stop()
+#print(name)
+#vs.stop()
 
 
 
