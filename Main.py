@@ -1,6 +1,8 @@
 from encode_faces import encodeFaces
+from manageData import *
 from imutils.video import VideoStream
 from imutils.video import FPS
+import requests
 import face_recognition
 import argparse
 import imutils
@@ -10,9 +12,9 @@ import cv2
 import os
 import time
 import RPi.GPIO as GPIO
-from manageData import *
 
 toggle = False
+global name
 
 def setup():
     GPIO.setmode(GPIO.BCM)
@@ -22,15 +24,12 @@ def setup():
 def swButton(ev=None):
     global toggle
     if toggle:
-        print('Button Stagnant')
-    
-    else:
         print('Button Pressed')
     
     toggle = not toggle
     
 def facialRecognition():
-    global toggle
+    global name
     name = "Unknown"
     # construct the argument parser and parse the arguments
     #ap = argparse.ArgumentParser()
@@ -52,13 +51,15 @@ def facialRecognition():
     print("[INFO] starting video stream...")
     #vs = VideoStream(src=0).start()
     # vs = VideoStream(usePiCamera=True).start()
-    time.sleep(2.0)
+    #time.sleep(2.0)
 
     # start the FPS counter
     fps = FPS().start()
 
     # loop over frames from the video file stream
     while True:
+        name = "Unknown"
+        #print('Looping...')
         # grab the frame from the threaded video stream and resize it
         # to 500px (to speedup processing)
         frame = vs.read()
@@ -109,6 +110,7 @@ def facialRecognition():
                     # will select first entry in the dictionary)
                     name = max(counts, key=counts.get)
                     
+                    print(name)
             # update the list of names
             names.append(name)
 
@@ -121,19 +123,26 @@ def facialRecognition():
                     cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (0, 255, 0), 2)
 
-            # display the image to our screen
-            cv2.imshow("Frame", frame)
-            key = cv2.waitKey(1) & 0xFF
+
 
             # if the `q` key was pressed, break from the loop
-            if name == "Unknown":
-                break
-            else:
-                # send current name to database
-                sendName(name)
+        if picButton() == True:
+            print('Pic Button Pressed')
+            sendName(name)
+            
+            break
+        #else:
+            # send current name to database
+            #sendName(name)
 
-            # update the FPS counter
-            fps.update()
+        # update the FPS counter
+        fps.update()
+        
+        # display the image to our screen
+        cv2.imshow("Frame", frame)
+        key = cv2.waitKey(1) & 0xFF
+            
+        #break
 
     # stop the timer and display FPS information
     fps.stop()
@@ -147,12 +156,14 @@ def facialRecognition():
 
 def buildFaceData():
     global toggle
+    global result
+    
     #prompt for username
-    sendStatus('old')
-    while(isSubmit()==False)
+    while(isSubmit()==False):
        time.sleep(1)
         
     userName = getName()
+    print(userName)
 
     # construct the argument parser and parse the arguments
     ap = argparse.ArgumentParser()
@@ -199,7 +210,7 @@ def buildFaceData():
      
         # if the `k` key was pressed, write the *original* frame to disk
         # so we can later process it and use it for face recognition
-        if not toggle:
+        if picButton():
             
             p = os.path.sep.join([args["output"], "{}.png".format(
                 str(total).zfill(5))])
@@ -212,8 +223,8 @@ def buildFaceData():
             
             total += 1
         # Break from loop after picture taken
-        time.delay(2)
         break
+        time.sleep(2)
 
     # do a bit of cleanup
     if result == True:
@@ -234,8 +245,14 @@ def destroy():
 setup()
 GPIO.add_event_detect(11, GPIO.RISING, callback=swButton)
 vs = VideoStream(src=0).start()
-time.sleep(2.0)
-facialRecognition()
+#encodeFaces()
+time.sleep(2)
+while True:
+    facialRecognition()
+    if name == 'Unknown':
+        sendStatus('new')
+        buildFaceData()
+        
 print(name)
 vs.stop()
 

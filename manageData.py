@@ -3,7 +3,7 @@ import os
 import pickle
 
 #url = 'http://pi.calebmcd.com:8000/'
-url = 'http://localhost:1880'
+url = 'http://192.168.50.162:1880'
 
 def sendStatus(status):
     global url
@@ -37,9 +37,10 @@ def getName():
 def picButton():
     global url
     
-    pressed = request.get((url + '/picTaken'))
+    r = requests.get((url + '/picTaken'))
+    pressed = r.text
     
-    if(pressed):
+    if(pressed=='1'):
         return True
     else:
         return False
