@@ -11,12 +11,16 @@ import time
 import cv2
 import os
 import time
+import sys
 
 global name
 global result
+global exitFlag
+exitFlag = False
 
 def facialRecognition():
     global name
+    global exitFlag
     name = "Unknown"
     # construct the argument parser and parse the arguments
     #ap = argparse.ArgumentParser()
@@ -42,6 +46,8 @@ def facialRecognition():
 
     # start the FPS counter
     fps = FPS().start()
+    
+    sendStatus('complete')
 
     # loop over frames from the video file stream
     while True:
@@ -110,12 +116,15 @@ def facialRecognition():
                     cv2.putText(frame, name, (left, y), cv2.FONT_HERSHEY_SIMPLEX,
                             0.75, (0, 255, 0), 2)
 
-
+        if adminInput() == True:
+            exitFlag = True
+            break
 
             # if the `q` key was pressed, break from the loop
         if picButton() == True:
             print('Pic Button Pressed')
             sendName(name)
+            sendStatus('complete')
             
             break
         #else:
@@ -168,8 +177,9 @@ def buildFaceData():
     print("[INFO] starting video stream...")
     vs = VideoStream(src=0).start()
     #vs = VideoStream(usePiCamera=True).start()
-    time.sleep(2.0)
+    time.sleep(0.5)
     total = 0
+    sendStatus('ready')
 
     # loop over the frames from the video stream
     while True:
@@ -178,17 +188,18 @@ def buildFaceData():
         # so we can apply face detection faster
         frame = vs.read()
         orig = frame.copy()
-        frame = imutils.resize(frame, width=400)
+        frame = imutils.resize(frame, width=500)
 
         # detect faces in the grayscale frame
         rects = detector.detectMultiScale(
             cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), scaleFactor=1.1, 
             minNeighbors=5, minSize=(30, 30))
 
+        #boxes = [(y, x + w, y + h, x) for (x, y, w, h) in rects]
         # loop over the face detections and draw them on the frame
         for (x, y, w, h) in rects:
             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
+                    
         # show the output frame
         cv2.imshow("Frame", frame)
         #cv2.imshow("orig", orig)
@@ -196,28 +207,31 @@ def buildFaceData():
      
         # if the `k` key was pressed, write the *original* frame to disk
         # so we can later process it and use it for face recognition
-        while True:
             #print('Waiting for button press....')
-            if picButton():
+        if picButton(): 
+            print('Button Pressed')
+            
+            #p = os.path.sep.join([args["output"], "{}.png".format(
+            #    str(total).zfill(5))])
+            newPath = "/home/pi/ece3552-finalProject/dataset/" + userName
+            if not os.path.exists(newPath):
+                os.makedirs(newPath)
+            
+            p = os.path.sep.join([os.path.expanduser('~') + "/ece3552-finalProject/dataset/" + userName, "{}.png".format(
+                str(total).zfill(5))])
+            print(p)
+            if not cv2.imwrite(p, orig):
+                result = False
+                print('False')
+            else:
+                result = True
+                print('True')
                 
-                print('Button Pressed')
-                
-                #p = os.path.sep.join([args["output"], "{}.png".format(
-                #    str(total).zfill(5))])
-                
-                p = os.path.sep.join([os.path.expanduser('~') + "database" + userName, "{}.png".format(
-                    str(total).zfill(5))])
-                if not cv2.imwrite(p, orig):
-                    result = False
-                    print('False')
-                else:
-                    result = True
-                    print('True')
-                    
-                break    
+            break
+            time.sleep(2)
             # Break from loop after picture taken
-        break
-        time.sleep(2)
+        #time.sleep(2)
+        #break
 
     # do a bit of cleanup
     if result == True:
@@ -236,16 +250,16 @@ def buildFaceData():
 #time.sleep(2)
 while True:
     facialRecognition()
+    if exitFlag == True:
+        break
     if name == 'Unknown':
         sendStatus('new')
         buildFaceData()
+    else:
+        sendStatus('old')
+        #time.sleep(1)
         
-#print(name)
-#vs.stop()
+encodeFaces()
+print('Faces Encoded')
 
-
-
-
-#facialRecognition()
-#buildFaceData()
-#encodeFaces()
+sys.exit('Exit-Success')

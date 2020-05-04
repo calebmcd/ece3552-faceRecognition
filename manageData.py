@@ -44,3 +44,15 @@ def picButton():
         return True
     else:
         return False
+    
+def adminInput():
+    global url
+    
+    r = requests.get((url + '/adminInput'))
+    pressed = r.text
+    
+    if(pressed=='1'):
+        return True
+    else:
+        return False
+    
